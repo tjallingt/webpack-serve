@@ -241,6 +241,20 @@ Listed below are some of the add-on patterns that can be found in
 - [staticOptions](docs/addons/static-content-options.config.js)
 - [useLocalIp](docs/addons/local-ip.config.js)
 
+## Node v6 Support
+
+This module will continue to support Node v6 through the use of
+[Babel](https://babeljs.io) until Node v10 enters [Active LTS](https://github.com/nodejs/Release).
+
+In order to run `webpack-serve` under Node v6, you must install the
+[optionalDependencies](/webpack-serve/blob/master/package.json#L30) that are
+required to automatically wire up in-process Babel transpilation via a require
+hook.
+
+_Note: Performance will be impacted, though the amount of that impact will
+vary on the implementation. This is a deliberate decision and will remain the
+only way to run `webpack-serve` under Node v6._
+
 ## Contributing
 
 We welcome your contributions! Please have a read of
