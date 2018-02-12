@@ -246,14 +246,29 @@ Listed below are some of the add-on patterns that can be found in
 This module will continue to support Node v6 through the use of
 [Babel](https://babeljs.io) until Node v10 enters [Active LTS](https://github.com/nodejs/Release).
 
-In order to run `webpack-serve` under Node v6, you must install the
+In order to run `webpack-serve` under Node v6 with the CLI, you must install the
 [optionalDependencies](/webpack-serve/blob/master/package.json#L30) that are
 required to automatically wire up in-process Babel transpilation via a require
 hook.
 
+When running  `webpack-serve` using the API, you must still install the
+`optionalDependencies` for Babel, and can make use of a utility
+function for registering the proper Babel settings. Add the following to your
+top-level file:
+
+```
+  const { babel } = require('webpack-serve/lib/global');
+  babel();
+```
+
+If you have an existing babel setup, you should add an equivalent Babel config
+to your implementation as can be found in
+[`global.js`](/webpack-contrib/webpack-serve/blob/master/lib/server.js).
+
 _Note: Performance will be impacted, though the amount of that impact will
 vary on the implementation. This is a deliberate decision and will remain the
-only way to run `webpack-serve` under Node v6._
+only way to run `webpack-serve` under Node v6. We have hopes of removing this
+requirement in the near future._
 
 ## Contributing
 

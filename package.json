@@ -20,19 +20,13 @@
     "cover": "nyc report --reporter=text-lcov > coverage.lcov && codecov --token=$WS_CODECOV_TOKEN",
     "lint": "eslint index.js cli.js bin lib test examples",
     "mocha": "mocha --require intelli-espower-loader test/test.js --full-trace --check-leaks --exit",
-    "test": "nyc npm run mocha"
+    "test": "npm run mocha"
   },
   "files": [
     "lib/",
     "cli.js",
     "index.js"
   ],
-  "optionalDependencies": {
-    "@babel/core": "^7.0.0-beta.39",
-    "@babel/polyfill": "^7.0.0-beta.39",
-    "@babel/preset-env": "^7.0.0-beta.39",
-    "@babel/register": "^7.0.0-beta.39"
-  },
   "peerDependencies": {
     "webpack": "^2.2.0 || ^3.0.0 || ^4.0.0-alpha.2"
   },
@@ -45,7 +39,7 @@
     "import-local": "^1.0.0",
     "killable": "^1.0.0",
     "koa": "^2.4.1",
-    "koa-static": "^4.0.2",
+    "@shellscape/koa-static": "^4.0.2",
     "koa-webpack": "^2.0.3",
     "loud-rejection": "^1.6.0",
     "meow": "^4.0.0",
@@ -58,10 +52,6 @@
     "webpack-log": "^1.1.2"
   },
   "devDependencies": {
-    "@babel/core": "^7.0.0-beta.39",
-    "@babel/polyfill": "^7.0.0-beta.39",
-    "@babel/preset-env": "^7.0.0-beta.39",
-    "@babel/register": "^7.0.0-beta.39",
     "codecov": "^3.0.0",
     "eslint": "^4.5.0",
     "eslint-config-webpack": "^1.2.5",

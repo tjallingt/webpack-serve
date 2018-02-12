@@ -1,7 +1,5 @@
 'use strict';
 
-require('./lib/global');
-
 const updateNotifier = require('update-notifier');
 const webpack = require('webpack');
 const weblog = require('webpack-log');
