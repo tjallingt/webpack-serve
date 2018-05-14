@@ -1,6 +1,5 @@
 const path = require('path');
 
-const assert = require('power-assert');
 const clip = require('clipboardy');
 const fetch = require('node-fetch');
 const mock = require('mock-require');
@@ -12,30 +11,38 @@ const util = require('../util');
 
 const nodeVersion = parseInt(process.version.substring(1), 10);
 
-const { load, pause, serve, t } = util;
+const { load, pause, run } = util;
 let hook;
+
+function runFetch(options, fn, requestPath = '') {
+  return run(options, (server) =>
+    fetch(
+      `http://${server.options.host}:${server.options.port}${requestPath}`
+    ).then(fn)
+  );
+}
 
 mock('opn', (...args) => {
   hook(...args);
 });
 
 describe('webpack-serve Options', () => {
-  before(pause);
+  beforeAll(pause);
   beforeEach(pause);
   afterEach(() => {
     hook = null;
   });
 
-  t('should parse json', () => {
-    assert(parse('{}'));
+  it('should parse json', () => {
+    expect(parse('{}'));
   });
 
-  t('should handle failed parse', () => {
-    assert(parse('asd') === 'asd');
-    assert(parse([]) == null);
+  it('should handle failed parse', () => {
+    expect(parse('asd') === 'asd');
+    expect(parse([]) == null);
   });
 
-  t('should accept an add option', (done) => {
+  it('should accept an add option', () => {
     const config = load('./fixtures/htm/webpack.config.js');
     config.serve.add = (app, middleware) => {
       middleware.webpack();
@@ -45,17 +52,12 @@ describe('webpack-serve Options', () => {
       });
     };
 
-    serve({ config }).then((server) => {
-      server.on('listening', () => {
-        fetch('http://localhost:8080').then((res) => {
-          assert(res.ok);
-          server.close(done);
-        });
-      });
+    return runFetch({ config }, (res) => {
+      expect(res.ok);
     });
   });
 
-  t('should accept a compiler option', (done) => {
+  it('should accept a compiler option', () => {
     const config = load('./fixtures/basic/webpack.config.js');
     const options = Object.assign({}, config.serve);
     delete config.serve;
@@ -63,44 +65,31 @@ describe('webpack-serve Options', () => {
     const compiler = webpack(config);
     options.compiler = compiler;
 
-    serve(options).then((server) => {
-      server.on('listening', () => {
-        fetch('http://localhost:8080').then((res) => {
-          assert(res.ok);
-          server.close(done);
-        });
-      });
+    return runFetch(options, (res) => {
+      expect(res.ok);
     });
   });
 
-  t('should accept a content option', (done) => {
+  it('should accept a content option', () => {
     const config = load('./fixtures/basic/webpack.config.js');
     config.serve.content = path.resolve(__dirname, '../fixtures/content');
 
-    serve({ config }).then((server) => {
-      server.on('listening', () => {
-        fetch('http://localhost:8080').then((res) => {
-          assert(res.ok);
-          server.close(done);
-        });
-      });
+    return runFetch({ config }, (res) => {
+      expect(res.ok);
     });
   });
 
-  t('should accept a clipboard option', (done) => {
+  it('should accept a clipboard option', () => {
     const config = load('./fixtures/basic/webpack.config.js');
     config.serve.clipboard = false;
     clip.writeSync('foo');
 
-    serve({ config }).then((server) => {
-      server.on('listening', () => {
-        assert.equal(clip.readSync(), 'foo');
-        server.close(done);
-      });
+    return run({ config }).then(() => {
+      expect(clip.readSync()).toBe('foo');
     });
   });
 
-  t('should accept a dev option', (done) => {
+  it('should accept a dev option', () => {
     const config = load('./fixtures/basic/webpack.config.js');
     config.serve = {
       dev: {
@@ -110,95 +99,80 @@ describe('webpack-serve Options', () => {
       },
     };
 
-    serve({ config }).then((server) => {
-      server.on('listening', () => {
-        fetch('http://localhost:8080/output.js').then((res) => {
-          assert(res.ok);
-          assert.equal(res.headers.get('x-foo'), 'Kachow');
-          server.close(done);
-        });
-      });
-    });
+    return runFetch(
+      { config },
+      (res) => {
+        expect(res.ok);
+        expect(res.headers.get('x-foo')).toBe('Kachow');
+      },
+      '/output.js'
+    );
   });
 
-  t('should accept a dev flag', (done) => {
+  it('should accept a dev flag', () => {
     const config = load('./fixtures/basic/webpack.config.js');
     const flags = {
-      dev: '{"publicPath":"/"}',
+      dev: '{"logLevel": "silent", "publicPath":"/"}',
     };
 
-    serve({ config, flags }).then(({ close, on, options }) => {
-      on('listening', () => {
-        assert.deepEqual(options.dev, { publicPath: '/' });
-        close(done);
-      });
+    return run({ config, flags }).then(({ options }) => {
+      expect(options.dev).toEqual({ logLevel: 'silent', publicPath: '/' });
     });
   });
 
-  t('should reject non-object dev', (done) => {
+  it('should reject non-object dev', () => {
     const config = load('./fixtures/basic/webpack.config.js');
     const flags = {
       dev: 'true',
     };
 
-    serve({ config, flags }).catch((err) => {
-      assert(err);
-      done();
+    return run({ config, flags }).catch((err) => {
+      expect(err);
     });
   });
 
-  t('should accept a host option', (done) => {
+  it('should accept a host option', () => {
     const config = load('./fixtures/basic/webpack.config.js');
     config.serve.host = '0.0.0.0';
 
-    serve({ config }).then((server) => {
-      server.on('listening', () => {
-        fetch('http://0.0.0.0:8080').then((res) => {
-          assert(res.ok);
-          server.close(done);
-        });
-      });
+    return runFetch({ config }, (res) => {
+      expect(res.ok);
     });
   });
 
-  t('should accept a hot flag', (done) => {
+  it('should accept a hot flag', () => {
     const config = load('./fixtures/basic/webpack.config.js');
     const flags = {
       hot: '{"hot":false}',
     };
 
-    serve({ config, flags }).then(({ close, on, options }) => {
-      on('listening', () => {
-        assert.deepEqual(options.hot.hot, false);
-        close(done);
-      });
+    return run({ config, flags }).then(({ options }) => {
+      expect(options.hot.hot).toEqual(false);
     });
   });
 
-  t('should reject non-object hot', (done) => {
+  it('should reject non-object hot', () => {
     const config = load('./fixtures/basic/webpack.config.js');
     const flags = {
       hot: 'true',
     };
 
-    serve({ config, flags }).catch((err) => {
-      assert(err);
-      done();
+    return run({ config, flags }).catch((err) => {
+      expect(err);
     });
   });
 
-  t('should not accept a mismatched hot.host option', (done) => {
+  it('should not accept a mismatched hot.host option', () => {
     const config = load('./fixtures/basic/webpack.config.js');
     config.serve.host = '0.0.0.0';
     config.serve.hot = { host: 'localhost' };
 
-    serve({ config }).catch((err) => {
-      assert(err);
-      done();
+    return run({ config }).catch((err) => {
+      expect(err);
     });
   });
 
-  t('should not accept a mismatched hot.host.server option', (done) => {
+  it('should not accept a mismatched hot.host.server option', () => {
     const config = load('./fixtures/basic/webpack.config.js');
     config.serve.host = '0.0.0.0';
     config.serve.hot = {
@@ -208,28 +182,22 @@ describe('webpack-serve Options', () => {
       },
     };
 
-    serve({ config }).catch((err) => {
-      assert(err);
-      done();
+    return run({ config }).catch((err) => {
+      expect(err);
     });
   });
 
-  t('should accept a matching hot.host option', (done) => {
+  it('should accept a matching hot.host option', () => {
     const config = load('./fixtures/basic/webpack.config.js');
     config.serve.host = '0.0.0.0';
     config.serve.hot = { host: '0.0.0.0' };
 
-    serve({ config }).then((server) => {
-      server.on('listening', () => {
-        fetch('http://0.0.0.0:8080').then((res) => {
-          assert(res.ok);
-          server.close(done);
-        });
-      });
+    return run({ config }, (res) => {
+      expect(res.ok);
     });
   });
 
-  t('should accept a matching hot.host.server option', (done) => {
+  it('should accept a matching hot.host.server option', () => {
     const config = load('./fixtures/basic/webpack.config.js');
     config.serve.host = '0.0.0.0';
     config.serve.hot = {
@@ -239,165 +207,134 @@ describe('webpack-serve Options', () => {
       },
     };
 
-    serve({ config }).then((server) => {
-      server.on('listening', () => {
-        fetch('http://0.0.0.0:8080').then((res) => {
-          assert(res.ok);
-          server.close(done);
-        });
-      });
+    return runFetch({ config }, (res) => {
+      expect(res.ok);
     });
   });
 
   if (nodeVersion < 9) {
-    t('should reject the http2 for Node < 9', (done) => {
+    it('should reject the http2 for Node < 9', () => {
       const config = load('./fixtures/basic/webpack.config.js');
       config.serve.http2 = true;
 
-      serve({ config }).catch((err) => {
-        assert(err);
-        done();
+      return run({ config }).catch((err) => {
+        expect(err);
       });
     });
   } else {
     // https://nodejs.org/api/http2.html#http2_client_side_example
-    t('should accept a http2 option', (done) => {
+    it('should accept a http2 option', () => {
       const config = load('./fixtures/basic/webpack.config.js');
       config.serve.http2 = true;
 
-      serve({ config }).then((server) => {
-        server.on('listening', () => {
-          // options.hot should be mutated from the default setting as an object
-          assert(server.options.http2);
-          setTimeout(() => server.close(done), 1000);
-        });
+      return run({ config }).then((server) => {
+        // options.hot should be mutated from the default setting as an object
+        expect(server.options.http2);
       });
     });
   }
 
-  t('should accept a https option');
-
-  // logLevel and logTime option tests can be found in ./log.js
-
-  t('should accept an open:Boolean option', (done) => {
-    const config = load('./fixtures/basic/webpack.config.js');
-    config.serve.open = true;
-    clip.writeSync('foo');
-
-    serve({ config }).then(({ close }) => {
-      hook = (...args) => {
-        // the open option should disable the clipboard feature
-        assert.equal(clip.readSync(), 'foo');
-        assert.equal(args[0], 'http://localhost:8080/');
-        assert.equal(Object.keys(args[1]), 0);
-        close(done);
-      };
-    });
-  });
-
-  t('should accept an open:Object option', (done) => {
-    const config = load('./fixtures/basic/webpack.config.js');
-    const opts = { app: 'Firefox', path: '/foo' };
-    config.serve.open = opts;
-
-    serve({ config }).then(({ close }) => {
-      hook = (...args) => {
-        assert.equal(args[0], 'http://localhost:8080/foo');
-        assert.equal(args[1], 'Firefox');
-        close(done);
-      };
-    });
-  });
-
+  it('should accept a https option');
+  //
+  // // logLevel and logTime option tests can be found in ./log.js
+  //
+  // it('should accept an open:Boolean option', () => {
+  //   const config = load('./fixtures/basic/webpack.config.js');
+  //   config.serve.open = true;
+  //   clip.writeSync('foo');
+  //
+  //   return run({ config }).then(() => {
+  //     hook = (...args) => {
+  //       // the open option should disable the clipboard feature
+  //       expect.equal(clip.readSync(), 'foo');
+  //       expect.equal(args[0], 'http://localhost:8080/');
+  //       expect.equal(Object.keys(args[1]), 0);
+  //     };
+  //   });
+  // });
+  //
+  // it('should accept an open:Object option', () => {
+  //   const config = load('./fixtures/basic/webpack.config.js');
+  //   const opts = { app: 'Firefox', path: '/foo' };
+  //   config.serve.open = opts;
+  //
+  //   return run({ config }).then(() => {
+  //     hook = (...args) => {
+  //       expect.equal(args[0], 'http://localhost:8080/foo');
+  //       expect.equal(args[1], 'Firefox');
+  //     };
+  //   });
+  // });
+  //
   // NOTE: we have to test this here as we have no means to hook opn via the cli
   // tests
-  t('should accept --open-* flags', (done) => {
-    const config = load('./fixtures/basic/webpack.config.js');
-    const flags = {
-      openApp: '["Firefox","--some-arg"]',
-      openPath: '/some-path',
-    };
+  // it('should accept --open-* flags', () => {
+  //   const config = load('./fixtures/basic/webpack.config.js');
+  //   const flags = {
+  //     openApp: '["Firefox","--some-arg"]',
+  //     openPath: '/some-path',
+  //   };
+  //
+  //   return run({ config, flags }).then(() => {
+  //     hook = (...args) => {
+  //       expect.equal(args[0], 'http://localhost:8080/some-path');
+  //       expect.deepEqual(args[1], JSON.parse(flags.openApp));
+  //     };
+  //   });
+  // });
 
-    serve({ config, flags }).then(({ close }) => {
-      hook = (...args) => {
-        assert.equal(args[0], 'http://localhost:8080/some-path');
-        assert.deepEqual(args[1], JSON.parse(flags.openApp));
-        close(done);
-      };
-    });
-  });
-
-  t('should accept a port option', (done) => {
+  it('should accept a port option', () => {
     const config = load('./fixtures/basic/webpack.config.js');
     config.serve.port = '1337';
 
-    serve({ config }).then((server) => {
-      server.on('listening', () => {
-        fetch('http://localhost:1337').then((res) => {
-          assert(res.ok);
-          server.close(done);
-        });
-      });
+    return run({ config }, (res) => {
+      expect(res.ok);
     });
   });
 
-  t('should accept a hot.hot option of `false`', (done) => {
+  it('should accept a hot.hot option of `false`', () => {
     const config = load('./fixtures/basic/webpack.config.js');
     config.serve.hot = false;
 
-    serve({ config }).then((server) => {
-      server.on('listening', () => {
-        fetch('http://localhost:8080').then((res) => {
-          assert(res.ok);
-          server.close(done);
-        });
-      });
+    return runFetch({ config }, (res) => {
+      expect(res.ok);
     });
   });
 
-  t('should accept a hot option of `true`', (done) => {
+  it('should accept a hot option of `true`', () => {
     const config = load('./fixtures/basic/webpack.config.js');
     config.serve.hot = true;
 
-    serve({ config }).then((server) => {
-      server.on('listening', () => {
-        // options.hot should be mutated from the default setting as an object
-        assert(typeof server.options.hot === 'object');
-        setTimeout(() => server.close(done), 1000);
+    return run({ config }).then((server) => {
+      // options.hot should be mutated from the default setting as an object
+      expect(typeof server.options.hot === 'object');
+    });
+  });
+
+  it('should accept a hot option of `false` and disable webpack-hot-client', () => {
+    const config = load('./fixtures/basic/webpack.config.js');
+    config.serve.hot = false;
+
+    return run({ config }).then(() => {
+      const socket = new WebSocket('ws://localhost:8081');
+
+      socket.on('error', (error) => {
+        // this  expects that the WebSocketServer is not running, a sure sign
+        // that webpack-hot-client has been disabled.
+        expect(error.message).toMatch(/ECONNREFUSED/);
       });
     });
   });
 
-  t(
-    'should accept a hot option of `false` and disable webpack-hot-client',
-    (done) => {
-      const config = load('./fixtures/basic/webpack.config.js');
-      config.serve.hot = false;
-
-      serve({ config }).then((server) => {
-        const socket = new WebSocket('ws://localhost:8081');
-
-        socket.on('error', (error) => {
-          // this asserts that the WebSocketServer is not running, a sure sign
-          // that webpack-hot-client has been disabled.
-          assert(/ECONNREFUSED/.test(error.message));
-          setTimeout(() => server.close(done), 1000);
-        });
-      });
-    }
-  );
-
-  t('should merge child options', (done) => {
+  it('should merge child options', () => {
     const config = load(
       './fixtures/basic/webpack.options-merge.config.js',
       false
     );
-    serve({ config }).then((server) => {
-      assert(server.options);
-      assert(server.options.dev.logLevel === 'error');
-      assert(server.options.dev.publicPath === '/');
-
-      setTimeout(() => server.close(done), 1000);
+    return run({ config }).then(({ options }) => {
+      expect(options);
+      expect(options.dev.logLevel).toBe('error');
+      expect(options.dev.publicPath).toBe('/');
     });
   });
 });

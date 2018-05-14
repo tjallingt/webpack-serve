@@ -2,7 +2,33 @@ const serve = require('../');
 
 const timeout = process.env.CIRCLECI ? 2e3 : 1e3;
 
+class Runner {
+  constructor(...args) {
+    this.server = null;
+    this.args = args;
+  }
+
+  run() {
+    return serve(...this.args).then((server) => {
+      this.server = server;
+      server.on('compiler-error', (err) => {
+        throw err[0];
+      });
+
+      return new Promise((resolve) => {
+        server.on('listening', () => {
+          resolve(server);
+        });
+      });
+    });
+  }
+}
+
 module.exports = {
+  close(server, done) {
+    setTimeout(() => server.close(done), 1e3);
+  },
+
   load(path, silent = true) {
     const raw = require(path) || {};
 
@@ -38,17 +64,25 @@ module.exports = {
     }
   },
 
-  serve(...args) {
-    return serve(...args).then((server) => {
-      server.on('compiler-error', (err) => {
-        throw err[0];
-      });
+  run(options, promise) {
+    const runner = new Runner(options);
 
-      return server;
-    });
+    return runner
+      .run()
+      .then(promise)
+      .finally(
+        () =>
+          new Promise((resolve) => {
+            setTimeout(() => {
+              if (runner.server) {
+                runner.server.close(resolve);
+              } else {
+                resolve();
+              }
+            }, 1e3);
+          })
+      );
   },
-
-  t: (...args) => it(...args).timeout(10e3),
 
   timeout,
 };

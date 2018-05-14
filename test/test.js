@@ -4,6 +4,10 @@ const { register } = require('../lib/global');
 
 register();
 
+jest.setTimeout(10e3);
+
+process.setMaxListeners(process.getMaxListeners() * 10);
+
 require('./tests/api');
 require('./tests/bus');
 require('./tests/cli');

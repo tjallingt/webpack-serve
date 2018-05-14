@@ -1,9 +1,8 @@
-const assert = require('power-assert');
 const sinon = require('sinon');
 const strip = require('strip-ansi');
 const weblog = require('webpack-log');
 
-const { load, pause, serve, t, timeout } = require('../util');
+const { load, pause, run } = require('../util');
 
 const log = console;
 const og = {
@@ -35,70 +34,64 @@ function restore(sandbox) {
 }
 
 describe('webpack-serve Logging', () => {
-  before(pause);
   beforeEach(function be(done) {
     // eslint-disable-line prefer-arrow-callback
     weblog.delLogger('webpack-serve');
     pause.call(this, done);
   });
 
-  after(() => weblog.delLogger('webpack-serve'));
+  afterAll(() => weblog.delLogger('webpack-serve'));
 
-  t('should default logLevel to `info`', (done) => {
+  it('should default logLevel to `info`', () => {
     const sandbox = spy();
     const config = load('./fixtures/basic/webpack.config.js', false);
 
-    serve({ config }).then((server) => {
+    return run({ config }).then((server) => {
       server.compiler.hooks.done.tap('WebpackServeTest', () => {
         // server.compiler.plugin('done', () => {
-        assert(log.info.callCount > 0);
+        expect(log.info.callCount).toBeGreaterThan(0);
         restore(sandbox);
-        server.close(done);
       });
     });
   });
 
-  t('should silence only webpack-serve', (done) => {
+  it('should silence only webpack-serve', () => {
     const sandbox = spy();
     const config = load('./fixtures/basic/webpack.config.js', false);
     config.serve = { logLevel: 'silent' };
 
-    serve({ config }).then((server) => {
-      setTimeout(() => {
-        const calls = log.info.getCalls();
-        assert(log.info.callCount > 0);
+    return run({ config }).then(() => {
+      const calls = log.info.getCalls();
+      expect(log.info.callCount).toBeGreaterThan(0);
 
-        for (const call of calls) {
-          const arg = strip(call.args[0]);
-          assert(arg.indexOf('｢serve｣') === -1);
-        }
+      for (const call of calls) {
+        const arg = strip(call.args[0]);
+        expect(arg.indexOf('｢serve｣') === -1);
+      }
 
-        restore(sandbox);
-        server.close(done);
-      }, timeout * 2);
+      restore(sandbox);
     });
   });
 
-  t('should accept a logTime option', (done) => {
+  it('should accept a logTime option', () => {
     const sandbox = spy();
     const config = load('./fixtures/basic/webpack.config.js', false);
     config.serve = { logTime: true };
 
-    serve({ config }).then((server) => {
+    return run({ config }).then((server) => {
       server.on('listening', () => {
         const calls = log.info.getCalls();
 
-        assert(log.info.callCount > 0);
+        expect(log.info.callCount).toBeGreaterThan(0);
 
         for (const call of calls) {
           const arg = strip(call.args[0]);
           if (arg.indexOf('｢serve｣') > 0) {
-            assert(/^\[[0-9]{1,2}:[0-9]{1,2}:[0-9]{1,2}\]/.test(arg));
+            expect(arg).toMatch(/^\[[0-9]{1,2}:[0-9]{1,2}:[0-9]{1,2}\]/);
           }
         }
 
         restore(sandbox);
-        server.close(done);
       });
     });
   });

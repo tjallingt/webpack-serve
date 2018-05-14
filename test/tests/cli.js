@@ -6,7 +6,7 @@ const fetch = require('node-fetch');
 const strip = require('strip-ansi');
 const WebSocket = require('ws');
 
-const { pause, t, timeout } = require('../util');
+const { pause, timeout } = require('../util');
 
 const cliPath = path.resolve(__dirname, '../../cli.js');
 const configPath = path.resolve(
@@ -38,10 +38,9 @@ function x(fn, ...args) {
 }
 
 describe('webpack-serve CLI', () => {
-  before(pause);
   beforeEach(pause);
 
-  t('should show help with --help', (done) => {
+  it('should show help with --help', (done) => {
     const proc = execa(cliPath, ['--help']);
 
     proc.then((result) => {
@@ -50,7 +49,7 @@ describe('webpack-serve CLI', () => {
     });
   });
 
-  t('should run webpack-serve [config]', (done) => {
+  it('should run webpack-serve [config]', (done) => {
     x(
       (proc) => {
         fetch('http://localhost:8080').then((res) => {
@@ -64,7 +63,7 @@ describe('webpack-serve CLI', () => {
     );
   });
 
-  t('should run webpack-serve --config', (done) => {
+  it('should run webpack-serve --config', (done) => {
     x(
       (proc) => {
         fetch('http://localhost:8080').then((res) => {
@@ -78,7 +77,7 @@ describe('webpack-serve CLI', () => {
     );
   });
 
-  t('should run webpack-serve and find the config', (done) => {
+  it('should run webpack-serve and find the config', (done) => {
     x(
       (proc) => {
         fetch('http://localhost:8080').then((res) => {
@@ -92,7 +91,7 @@ describe('webpack-serve CLI', () => {
     );
   });
 
-  t('should run webpack-serve with webpack v4 defaults', (done) => {
+  it('should run webpack-serve with webpack v4 defaults', (done) => {
     x(
       (proc) => {
         fetch('http://localhost:8080').then((res) => {
@@ -106,7 +105,7 @@ describe('webpack-serve CLI', () => {
     );
   });
 
-  t('should use the --content flag', (done) => {
+  it('should use the --content flag', (done) => {
     const confPath = path.resolve(
       __dirname,
       '../fixtures/content/webpack.config.js'
@@ -126,7 +125,7 @@ describe('webpack-serve CLI', () => {
     );
   });
 
-  t('should use the --host flag', (done) => {
+  it('should use the --host flag', (done) => {
     x(
       (proc) => {
         fetch('http://0.0.0.0:8080').then((res) => {
@@ -142,13 +141,13 @@ describe('webpack-serve CLI', () => {
 
   // need to get devcert documentation going and then write tests
   // for the http2 test: https://nodejs.org/api/http2.html#http2_client_side_example
-  t('should use the --http2 flag');
-  t('should use the --https-cert flag');
-  t('should use the --https-key flag');
-  t('should use the --https-pass flag');
-  t('should use the --https-pfx flag');
+  it('should use the --http2 flag');
+  it('should use the --https-cert flag');
+  it('should use the --https-key flag');
+  it('should use the --https-pass flag');
+  it('should use the --https-pfx flag');
 
-  t('should use the --log-level flag', (done) => {
+  it('should use the --log-level flag', (done) => {
     const proc = execa(cliPath, [
       '--config',
       configPath,
@@ -167,7 +166,7 @@ describe('webpack-serve CLI', () => {
     }, timeout);
   });
 
-  t('should use the --log-time flag', (done) => {
+  it('should use the --log-time flag', (done) => {
     const proc = execa(cliPath, ['--config', configPath, '--log-time']);
 
     proc.then((result) => {
@@ -193,7 +192,7 @@ describe('webpack-serve CLI', () => {
     }, timeout);
   });
 
-  t('should use the --port flag', (done) => {
+  it('should use the --port flag', (done) => {
     x(
       (proc) => {
         fetch('http://localhost:1337').then((res) => {
@@ -207,7 +206,7 @@ describe('webpack-serve CLI', () => {
     );
   });
 
-  t('should exit on thrown Error', (done) => {
+  it('should exit on thrown Error', (done) => {
     const confPath = path.resolve(
       __dirname,
       '../fixtures/basic/webpack.config-error.config.js'
@@ -220,7 +219,7 @@ describe('webpack-serve CLI', () => {
     });
   });
 
-  t('should use the --no-hot-client flag', (done) => {
+  it('should use the --no-hot-client flag', (done) => {
     x(
       (proc) => {
         const socket = new WebSocket('ws://localhost:8081');
@@ -238,7 +237,7 @@ describe('webpack-serve CLI', () => {
     );
   });
 
-  t('should use the --require flag', (done) => {
+  it('should use the --require flag', (done) => {
     const confPath = path.resolve(
       __dirname,
       '../fixtures/basic/webpack.env.config.js'
