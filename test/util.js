@@ -57,7 +57,6 @@ module.exports = {
 
   pause(done) {
     if (process.env.CIRCLECI) {
-      this.timeout(3e2);
       setTimeout(done, 2e2);
     } else {
       done();
