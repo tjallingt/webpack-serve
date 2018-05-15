@@ -8,7 +8,7 @@ const WebSocket = require('ws');
 
 const { pause, timeout } = require('../util');
 
-const cliPath = path.resolve(__dirname, '../../cli.js');
+const cliPath = path.resolve(__dirname, '../../lib/cli.js');
 const configPath = path.resolve(
   __dirname,
   '../fixtures/basic/webpack.config.js'
