@@ -1,6 +1,5 @@
 const path = require('path');
 
-const assert = require('power-assert');
 const execa = require('execa');
 const fetch = require('node-fetch');
 const strip = require('strip-ansi');
@@ -44,7 +43,7 @@ describe('webpack-serve CLI', () => {
     const proc = execa(cliPath, ['--help']);
 
     proc.then((result) => {
-      assert(strip(result.stdout).indexOf('Usage') > 0);
+      expect(strip(result.stdout).indexOf('Usage')).toBeGreaterThan(0);
       done();
     });
   });
@@ -53,7 +52,7 @@ describe('webpack-serve CLI', () => {
     x(
       (proc) => {
         fetch('http://localhost:8080').then((res) => {
-          assert(res.ok);
+          expect(res.ok);
           proc.kill('SIGINT');
           done();
         });
@@ -67,7 +66,7 @@ describe('webpack-serve CLI', () => {
     x(
       (proc) => {
         fetch('http://localhost:8080').then((res) => {
-          assert(res.ok);
+          expect(res.ok);
           proc.kill('SIGINT');
           done();
         });
@@ -81,7 +80,7 @@ describe('webpack-serve CLI', () => {
     x(
       (proc) => {
         fetch('http://localhost:8080').then((res) => {
-          assert(res.ok);
+          expect(res.ok);
           proc.kill('SIGINT');
           done();
         });
@@ -95,7 +94,7 @@ describe('webpack-serve CLI', () => {
     x(
       (proc) => {
         fetch('http://localhost:8080').then((res) => {
-          assert(res.ok);
+          expect(res.ok);
           proc.kill('SIGINT');
           done();
         });
@@ -115,7 +114,7 @@ describe('webpack-serve CLI', () => {
     x(
       (proc) => {
         fetch('http://localhost:8080').then((res) => {
-          assert(res.ok);
+          expect(res.ok);
           proc.kill('SIGINT');
           done();
         });
@@ -129,7 +128,7 @@ describe('webpack-serve CLI', () => {
     x(
       (proc) => {
         fetch('http://0.0.0.0:8080').then((res) => {
-          assert(res.ok);
+          expect(res.ok);
           proc.kill('SIGINT');
           done();
         });
@@ -156,7 +155,7 @@ describe('webpack-serve CLI', () => {
     ]);
 
     proc.then((result) => {
-      assert.equal(result.stdout, '');
+      expect(result.stdout).toBe('');
       done();
     });
 
@@ -175,10 +174,10 @@ describe('webpack-serve CLI', () => {
         .map((l) => strip(l))
         .filter((l) => l.indexOf('ℹ ｢') > 0);
 
-      assert(lines.length > 0);
+      expect(lines.length).toBeGreaterThan(0);
 
       for (const line of lines) {
-        assert(/^\[[0-9]{1,2}:[0-9]{1,2}:[0-9]{1,2}\]/.test(line));
+        expect(line).toMatch(/^\[[0-9]{1,2}:[0-9]{1,2}:[0-9]{1,2}\]/);
       }
 
       done();
@@ -196,7 +195,7 @@ describe('webpack-serve CLI', () => {
     x(
       (proc) => {
         fetch('http://localhost:1337').then((res) => {
-          assert(res.ok);
+          expect(res.ok);
           proc.kill('SIGINT');
           done();
         });
@@ -214,7 +213,7 @@ describe('webpack-serve CLI', () => {
     const proc = x(() => {}, cliPath, ['--config', confPath]);
 
     proc.catch(() => {
-      assert(true);
+      expect(true);
       done();
     });
   });
@@ -227,7 +226,7 @@ describe('webpack-serve CLI', () => {
         socket.on('error', (error) => {
           // this asserts that the WebSocketServer is not running, a sure sign
           // that webpack-hot-client has been disabled.
-          assert(/ECONNREFUSED/.test(error.message));
+          expect(error.message).toMatch(/ECONNREFUSED/);
           proc.kill('SIGINT');
           done();
         });
@@ -247,7 +246,7 @@ describe('webpack-serve CLI', () => {
     x(
       (proc) => {
         fetch('http://localhost:8080').then((res) => {
-          assert(res.ok);
+          expect(res.ok);
           proc.kill('SIGINT');
           done();
         });

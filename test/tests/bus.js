@@ -1,5 +1,3 @@
-const assert = require('power-assert');
-
 const eventbus = require('../../lib/bus');
 
 describe('webpack-serve Event Bus', () => {
@@ -7,7 +5,7 @@ describe('webpack-serve Event Bus', () => {
     const bus = eventbus({
       on: {
         foo: () => {
-          assert(true);
+          expect(true);
           done();
         },
       },
@@ -20,7 +18,7 @@ describe('webpack-serve Event Bus', () => {
     const init = () => {
       eventbus({ on: 'foo' });
     };
-    assert.throws(init);
+    expect(init).toThrow();
   });
 
   it('should not allow a non-function handler', () => {
@@ -31,6 +29,6 @@ describe('webpack-serve Event Bus', () => {
         },
       });
     };
-    assert.throws(init);
+    expect(init).toThrow();
   });
 });
