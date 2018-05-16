@@ -83,8 +83,8 @@ module.exports = (opts) => {
       });
     })
     .catch((err) => {
-      // eslint-disable-next-line no-console
-      console.log('An error was thrown while starting webpack-serve.\n  ', err);
+      const log = weblog({ name: 'serve', id: 'webpack-serve' });
+      log.error('An error was thrown while starting webpack-serve');
       throw err;
     });
 };

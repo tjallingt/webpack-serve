@@ -1,6 +1,7 @@
-const serve = require('../');
+const { register } = require('../lib/global');
 
-const timeout = process.env.CIRCLECI ? 2e3 : 1e3;
+register();
+process.setMaxListeners(20);
 
 module.exports = {
   load(path, silent = true) {
@@ -28,27 +29,4 @@ module.exports = {
 
     return config;
   },
-
-  pause(done) {
-    if (process.env.CIRCLECI) {
-      this.timeout(3e2);
-      setTimeout(done, 2e2);
-    } else {
-      done();
-    }
-  },
-
-  serve(...args) {
-    return serve(...args).then((server) => {
-      server.on('compiler-error', (err) => {
-        throw err[0];
-      });
-
-      return server;
-    });
-  },
-
-  t: (...args) => it(...args).timeout(10e3),
-
-  timeout,
 };
