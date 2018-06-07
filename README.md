@@ -387,9 +387,10 @@ Emitted when a compiler has encountered a warning, or a build has warnings.
 
 #### listening
 
-Arguments:  
- `Koa` _server_  
- `Object` _options_
+Arguments:
+
+* `Koa` _server_
+* `Object` _options_
 
 Emitted when the server begins listening for connections.
 
